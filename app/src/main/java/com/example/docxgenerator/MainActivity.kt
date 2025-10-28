@@ -8,11 +8,14 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -33,7 +36,8 @@ import java.util.*
 class MainActivity : ComponentActivity() {
     val WRITE_REQUEST_CODE = 1235
     val READ_REQUEST_CODE = 1236
-    val doc = AndroidDocBuilder();
+    val doc = AndroidDocBuilder()
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val permissionW = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -48,24 +52,21 @@ class MainActivity : ComponentActivity() {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), READ_REQUEST_CODE)
         }
 
-        // Check if the Recorders ("/storage/emulated/0/Recorders/") directory exists, and if not then create it
         val folder = File(Environment.getExternalStorageDirectory().path.toString() + "/WDocuments")
         if (folder.exists()) {
             if (folder.isDirectory) {
-                // The Recorders directory exists
+                // The directory exists
             } else {
-                // Create the Recorders directory
                 folder.mkdir()
             }
         } else {
-            // Create the Recorders directory
             folder.mkdir()
         }
 
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale("fr")).format(Date())
-
         var fullPathToFile =
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).toString() + "/${timeStamp}_doc.docx"
+            
         setContent {
             DocxGeneratorTheme {
                 Surface(
@@ -76,56 +77,206 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(20.dp)
+                            .verticalScroll(rememberScrollState())
                     ) {
+                        Text(
+                            text = "DocX Generator - Enhanced Features",
+                            style = MaterialTheme.typography.h5,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                        
                         Text(
                             text = longText,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .fillMaxHeight(0.2F)
+                                .padding(bottom = 16.dp)
                         )
+                        
+                        // Basic Text
                         Button(
                             onClick = {
-                                      doc.addText(longText);
+                                if (doc.addText(longText)) {
+                                    showToast("Text added successfully")
+                                } else {
+                                    showToast("Failed to add text")
+                                    Log.e("DocumentBuilder", "Failed to add text")
+                                }
                             },
                             modifier = Modifier
-                                .align(alignment = Alignment.CenterHorizontally)
-                                .padding(top = 20.dp)
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
                         ) {
-                            Text(text = "Add Text")
+                            Text(text = "Add Plain Text")
                         }
+                        
+                        // Formatted Text
+                        Button(
+                            onClick = {
+                                if (doc.addFormattedText(
+                                    "Bold Red Text - Size 16", 
+                                    bold = true, 
+                                    italic = false, 
+                                    _underline = false, 
+                                    font_size = 16, 
+                                    color = "FF0000"
+                                )) {
+                                    showToast("Formatted text added")
+                                } else {
+                                    showToast("Failed to add formatted text")
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Text(text = "Add Formatted Text (Bold Red)")
+                        }
+                        
+                        // Italic Blue Text
+                        Button(
+                            onClick = {
+                                doc.addFormattedText(
+                                    "Italic Blue Text - Size 14", 
+                                    bold = false, 
+                                    italic = true, 
+                                    _underline = false, 
+                                    font_size = 14, 
+                                    color = "0000FF"
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Text(text = "Add Italic Blue Text")
+                        }
+                        
+                        // Centered Text
+                        Button(
+                            onClick = {
+                                if (doc.addParagraphWithAlignment("This text is centered", "center")) {
+                                    showToast("Centered text added")
+                                } else {
+                                    showToast("Failed to add centered text")
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Text(text = "Add Centered Text")
+                        }
+                        
+                        // Right Aligned Text
+                        Button(
+                            onClick = {
+                                doc.addParagraphWithAlignment("This text is right-aligned", "right")
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Text(text = "Add Right-Aligned Text")
+                        }
+                        
+                        // Bullet List
+                        Button(
+                            onClick = {
+                                doc.addBulletItem("First bullet point")
+                                doc.addBulletItem("Second bullet point")
+                                doc.addBulletItem("Third bullet point")
+                                showToast("Bullet list added")
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Text(text = "Add Bullet List (3 items)")
+                        }
+                        
+                        // Numbered List
+                        Button(
+                            onClick = {
+                                doc.addNumberedItem("First numbered item")
+                                doc.addNumberedItem("Second numbered item")
+                                doc.addNumberedItem("Third numbered item")
+                                showToast("Numbered list added")
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Text(text = "Add Numbered List (3 items)")
+                        }
+                        
+                        // Table
+                        Button(
+                            onClick = {
+                                if (doc.addTable(3, 3)) {
+                                    showToast("3x3 table added")
+                                } else {
+                                    showToast("Failed to add table")
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Text(text = "Add Table (3x3)")
+                        }
+                        
+                        // Image
                         val galleryLauncher = rememberLauncherForActivityResult(
                             ActivityResultContracts.GetContent()) {
-                            doc.addImage(FileUtils().getPath(this@MainActivity, it)!!, 100, 100)
+                            it?.let { uri ->
+                                val path = FileUtils().getPath(this@MainActivity, uri)
+                                if (path != null) {
+                                    if (doc.addImage(path, 400, 300)) {
+                                        showToast("Image added (with compression)")
+                                    } else {
+                                        showToast("Failed to add image")
+                                        Log.e("DocumentBuilder", "Failed to add image")
+                                    }
+                                }
+                            }
                         }
+                        
                         Button(
                             onClick = {
                                 galleryLauncher.launch("image/*")
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 20.dp)
+                                .padding(vertical = 4.dp)
                         ) {
-                            Text(text = "Add Image")
+                            Text(text = "Add Image (Auto-Compressed)")
                         }
 
+                        // Generate Document
                         Button(
                             onClick = {
-                                doc.generateDocx(fullPathToFile);
-                                openFile(fullPathToFile);
+                                if (doc.generateDocx(fullPathToFile)) {
+                                    showToast("Document generated successfully!")
+                                    openFile(fullPathToFile)
+                                } else {
+                                    showToast("Failed to generate document")
+                                    Log.e("DocumentBuilder", "Failed to generate document")
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 20.dp)
+                                .padding(vertical = 16.dp)
                         ) {
-                            Text(text = "Generate Document")
+                            Text(text = "Generate & Open Document")
                         }
-
                     }
-
                 }
             }
-
         }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     fun openFile(fileName: String) {
@@ -133,7 +284,7 @@ class MainActivity : ComponentActivity() {
         val uri: Uri = if (Build.VERSION.SDK_INT < 24) {
             Uri.fromFile(file)
         } else {
-            Uri.parse(file.path) // My work-around for SDKs up to 29.
+            Uri.parse(file.path)
         }
         val viewFile = Intent(Intent.ACTION_VIEW)
         viewFile.setDataAndType(uri, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
@@ -143,7 +294,6 @@ class MainActivity : ComponentActivity() {
     @Deprecated("Should change this")
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         when (requestCode) {
-
             WRITE_REQUEST_CODE -> {
                 if (grantResults.isEmpty() || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     Log.i("DocumentBuilder", "Permission has been denied by user")
@@ -159,14 +309,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
+    
     companion object {
-        // Used to load the 'audio_lib' library on application startup.
         init {
-            System.loadLibrary("docx_lib");
-            RustLog.initialiseLogging();
+            System.loadLibrary("docx_lib")
+            RustLog.initialiseLogging()
         }
     }
 }
+
 const val longText = "Arriving at Changi airport, and after going through the immigration, I went straight to the Jewel Changi, seeing one of the iconic sites you usually would come across whenever you see anything talking about the best airports in the World. All this time, I was enjoying the free wifi so I could immediately update the status :)."
