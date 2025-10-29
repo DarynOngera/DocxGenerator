@@ -4,7 +4,7 @@ This pull request provides a comprehensive update to the DocxGenerator applicati
 
 ## Key Changes
 
-### ✨ New Features
+### New Features
 
 *   **Custom Text Formatting:** Users can now input their own text and apply **bold** and *italic* formatting before adding it to the document.
 *   **Custom Tables:** A new feature allows users to create tables with custom content by providing data in CSV format.
@@ -13,7 +13,7 @@ This pull request provides a comprehensive update to the DocxGenerator applicati
 *   **Bulleted and Numbered Lists:** Support for creating bulleted and numbered lists has been added.
 *   **Image Compression:** Images larger than 500KB are now automatically compressed to reduce file size and improve performance.
 
-### 🐛 Bug Fixes & Improvements
+### Bug Fixes & Improvements
 
 *   **Build System:** The Gradle build system has been significantly improved to provide a more reliable and consistent build process across all major Android architectures (armeabi-v7a, arm64-v8a, x86, x86_64).
 *   **Error Handling:**
@@ -22,7 +22,7 @@ This pull request provides a comprehensive update to the DocxGenerator applicati
 *   **Performance:** The expensive document cloning process in the Rust library has been eliminated by using `std::mem::replace()`, resulting in a significant performance improvement and a ~56% reduction in code size.
 *   **UI Enhancements:** The main screen of the application is now scrollable to accommodate the new feature buttons.
 
-### 💻 Code and Build System Changes
+### Code and Build System Changes
 
 *   **`docx_lib/` (Rust Library):**
     *   **`Cargo.toml`:** Added dependencies for `image`, `serde`, and `serde_json`.
