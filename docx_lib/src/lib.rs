@@ -100,6 +100,28 @@ impl AndroidDocBuilder {
     }
 
     #[generate_interface]
+    pub fn add_custom_table(&mut self, data: &str) -> bool {
+        log::debug!("Adding custom table from JSON");
+        let data: Result<Vec<Vec<String>>, _> = serde_json::from_str(data);
+        match data {
+            Ok(data) => {
+                let table_rows: Vec<_> = data.into_iter().map(|row_data| {
+                    let table_cells: Vec<_> = row_data.into_iter().map(|cell_data| {
+                        TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text(cell_data)))
+                    }).collect();
+                    TableRow::new(table_cells)
+                }).collect();
+                self.doc = std::mem::replace(&mut self.doc, Docx::new()).add_table(Table::new(table_rows));
+                true
+            }
+            Err(e) => {
+                log::error!("Error deserializing table data: {}", e);
+                false
+            }
+        }
+    }
+
+    #[generate_interface]
     pub fn add_image(&mut self, file: &str, width: u32, height: u32) -> bool {
         log::debug!("Fetching file: {}", file);
         match File::open(file).and_then(|mut f| {
