@@ -16,10 +16,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -28,6 +26,7 @@ import androidx.core.content.ContextCompat
 import com.example.docxgenerator.lib.AndroidDocBuilder
 import com.example.docxgenerator.lib.RustLog
 import com.example.docxgenerator.ui.theme.DocxGeneratorTheme
+import org.json.JSONArray
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,6 +39,7 @@ class MainActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        showToast("App started")
         val permissionW = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
         if (permissionW != PackageManager.PERMISSION_GRANTED) {
             Log.i("DocumentBuilder", "Permission to write denied")
@@ -92,6 +92,90 @@ class MainActivity : ComponentActivity() {
                                 .padding(bottom = 16.dp)
                         )
                         
+                        var customText by remember { mutableStateOf("") }
+                        var isBold by remember { mutableStateOf(false) }
+                        var isItalic by remember { mutableStateOf(false) }
+
+                        TextField(
+                            value = customText,
+                            onValueChange = { customText = it },
+                            label = { Text("Custom Text") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Button(onClick = { isBold = !isBold }) {
+                                Text(if (isBold) "Bold (On)" else "Bold (Off)")
+                            }
+                            Button(onClick = { isItalic = !isItalic }) {
+                                Text(if (isItalic) "Italic (On)" else "Italic (Off)")
+                            }
+                        }
+
+                        Button(
+                            onClick = {
+                                if (customText.isNotEmpty()) {
+                                    if (doc.addFormattedText(
+                                        customText,
+                                        isBold,
+                                        isItalic,
+                                        false,
+                                        12,
+                                        "000000"
+                                    )) {
+                                        showToast("Custom text added")
+                                        customText = ""
+                                    } else {
+                                        showToast("Failed to add custom text")
+                                    }
+                                } else {
+                                    showToast("Please enter some text")
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Add Custom Text")
+                        }
+
+                        var tableData by remember { mutableStateOf("") }
+
+                        TextField(
+                            value = tableData,
+                            onValueChange = { tableData = it },
+                            label = { Text("Table Data (CSV format)") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Button(
+                            onClick = {
+                                if (tableData.isNotEmpty()) {
+                                    val rows = tableData.split("\n").map { it.split(",") }
+                                    val jsonArray = JSONArray()
+                                    for (row in rows) {
+                                        val jsonRow = JSONArray()
+                                        for (cell in row) {
+                                            jsonRow.put(cell)
+                                        }
+                                        jsonArray.put(jsonRow)
+                                    }
+                                    if (doc.addCustomTable(jsonArray.toString())) {
+                                        showToast("Custom table added")
+                                        tableData = ""
+                                    } else {
+                                        showToast("Failed to add custom table")
+                                    }
+                                } else {
+                                    showToast("Please enter some table data")
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Add Custom Table")
+                        }
+
                         // Basic Text
                         Button(
                             onClick = {
@@ -114,11 +198,11 @@ class MainActivity : ComponentActivity() {
                             onClick = {
                                 if (doc.addFormattedText(
                                     "Bold Red Text - Size 16", 
-                                    bold = true, 
-                                    italic = false, 
-                                    _underline = false, 
-                                    font_size = 16, 
-                                    color = "FF0000"
+                                    true, 
+                                    false, 
+                                    false, 
+                                    16, 
+                                    "FF0000"
                                 )) {
                                     showToast("Formatted text added")
                                 } else {
@@ -137,11 +221,11 @@ class MainActivity : ComponentActivity() {
                             onClick = {
                                 doc.addFormattedText(
                                     "Italic Blue Text - Size 14", 
-                                    bold = false, 
-                                    italic = true, 
-                                    _underline = false, 
-                                    font_size = 14, 
-                                    color = "0000FF"
+                                    false, 
+                                    true, 
+                                    false, 
+                                    14, 
+                                    "0000FF"
                                 )
                             },
                             modifier = Modifier
@@ -255,12 +339,17 @@ class MainActivity : ComponentActivity() {
                         // Generate Document
                         Button(
                             onClick = {
-                                if (doc.generateDocx(fullPathToFile)) {
-                                    showToast("Document generated successfully!")
-                                    openFile(fullPathToFile)
-                                } else {
-                                    showToast("Failed to generate document")
-                                    Log.e("DocumentBuilder", "Failed to generate document")
+                                try {
+                                    if (doc.generateDocx(fullPathToFile)) {
+                                        showToast("Document generated successfully at $fullPathToFile")
+                                        openFile(fullPathToFile)
+                                    } else {
+                                        showToast("Failed to generate document. Check logs for details.")
+                                        Log.e("DocumentBuilder", "Failed to generate document at $fullPathToFile")
+                                    }
+                                } catch (e: Exception) {
+                                    showToast("An error occurred: ${e.message}")
+                                    Log.e("DocumentBuilder", "Exception generating document", e)
                                 }
                             },
                             modifier = Modifier

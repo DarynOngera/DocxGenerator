@@ -51,6 +51,13 @@ public final class AndroidDocBuilder {
     }
     private static native boolean do_addTable(long self, long rows, long cols);
 
+    public final boolean addCustomTable(@NonNull String data) {
+        boolean ret = do_addCustomTable(mNativeObj, data);
+
+        return ret;
+    }
+    private static native boolean do_addCustomTable(long self, @NonNull String data);
+
     public final boolean addImage(@NonNull String file, long width, long height) {
         boolean ret = do_addImage(mNativeObj, file, width, height);
 
