@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace 'com.example.docxgenerator'
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.example.docxgenerator"
         minSdk 21
-        targetSdk 32
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
@@ -77,13 +77,28 @@ def archTriplets = [
         'x86_64': 'x86_64-linux-android'
 ]
 
+// Read local.properties
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def cargoBin = localProperties.getProperty('cargo.bin') ?: 'cargo'
+def ndkDir = localProperties.getProperty('ndk.dir')
+
 archTriplets.each { arch, target ->
     project.ext.cargo_target_directory = rustBasePath + "/target"
     
     // Build with cargo
     tasks.create(name: "cargo-build-${arch}", type: Exec, description: "Building core for ${arch}") {
         workingDir rustBasePath
-        commandLine 'cargo', 'build', "--target=${target}", '--release'
+        commandLine cargoBin, 'build', "--target=${target}", '--release'
+        if (ndkDir) {
+            environment "ANDROID_NDK_HOME", ndkDir
+        }
     }
     
     // Copy build libs directly into this app's libs directory

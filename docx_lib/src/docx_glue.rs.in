@@ -16,6 +16,7 @@ foreign_class!(
 		fn AndroidDocBuilder::add_bullet_item(& mut self , text : & str)->bool; alias addBulletItem;
 		fn AndroidDocBuilder::add_numbered_item(& mut self , text : & str)->bool; alias addNumberedItem;
 		fn AndroidDocBuilder::add_table(& mut self , rows : u32 , cols : u32)->bool; alias addTable;
+		fn AndroidDocBuilder::add_custom_table(& mut self , data : & str)->bool; alias addCustomTable;
 		fn AndroidDocBuilder::add_image(& mut self , file : & str , width : u32 , height : u32)->bool; alias addImage;
 		fn AndroidDocBuilder::generate_docx(& mut self , file_name : & str)->bool; alias generateDocx;
 	}
